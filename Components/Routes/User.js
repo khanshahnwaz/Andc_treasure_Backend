@@ -1,13 +1,17 @@
 const app = require('express');
-const user = require('../Collections/User');
 const router = app.Router();
 // bcrypt for password hashing 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // to generate tokens 
+const checkUser=require('../LoginMiddleware/checkUser')
 const secretKey = "This is Shahnwaz Khan";
 const {Auth}=require('two-step-auth')
 const nodemailer=require('nodemailer')
-
+const book=require('../Collections/Book/BookPublication')
+const chapter=require('../Collections/Book/BookChapter')
+const conference=require('../Collections/Conference/ConferencePublication')
+const journal=require('../Collections/Journal/JournalPublication');
+const user = require('../Collections/User');
 // Route 1: Register new user . Login not required
 router.post('/signUp', async (req, res) => {
     // console.log("Hi I am here.")
@@ -46,6 +50,10 @@ router.post('/signUp', async (req, res) => {
             phone:create.Phone,
             department:create.Department,
             designation:create.Designation,
+            bookLen:0,
+            chapterLen:0,
+            journalLen:0,
+            conferenceLen:0
         }
         return res.status(201).json({Message:"Account created successfully.",token:token,status:201,data:userData});
     } else return res.status(401).json({Message: "Internal server error." })
@@ -73,6 +81,11 @@ router.post('/login', async (req, res) => {
             id: oldPassword._id
         }
     }
+    // find length of the publications
+    const bookLen=await book.find({FID:oldPassword._id});
+    const chapterLen=await chapter.find({FID:oldPassword._id})
+    const conferenceLen=await conference.find({FID:oldPassword._id})
+    const journalLen=await journal.find({FID:oldPassword._id})
 
     const userData={
         name:oldPassword.Name,
@@ -80,6 +93,10 @@ router.post('/login', async (req, res) => {
         phone:oldPassword.Phone,
         department:oldPassword.Department,
         designation:oldPassword.Designation,
+        bookLen:bookLen.length,
+        chapterLen:chapterLen.length,
+        conferenceLen:conferenceLen.length,
+        journalLen:journalLen.length
     }
     const token = jwt.sign(payLoad, secretKey);
     // localStorage.setItem('token', token)
@@ -117,6 +134,57 @@ router.put('/forgotPassword',async(req,res)=>{
       });
     }catch(err){
         console.log("Server error ",err)
+    }
+})
+
+
+router.put('/updateUser',checkUser,async(req,res)=>{
+    const FID=req.user.id;
+    console.log("requested id is",FID)
+    const data=req.body;
+    console.log("requested new data is",data)
+    // find if user exists
+    try{
+    const usr=await user.findOne({_id:FID});
+    console.log("user is",usr)
+    if(!usr)
+      return res.status(404).json({Message:"User does not exist."})
+    // check if the email id is new and if it is new then search for duplicate email id
+    if(usr.Email!=data.Email)
+    {
+        const checkEmail=await user.findOne({Email:data.Email})
+        if(checkEmail)
+          return res.status(405).json({Message:"Email already exists."})
+    }  
+    
+    const result=await user.updateOne({_id:FID},{...data,Password:usr.Password})
+    console.log("acknowledgmenet is ",result)
+    if(!result.acknowledged)
+      return res.status(500).json({Message:"Couldn't update details."})
+    // find the new user data and result it
+    const oldPassword=await user.findOne({_id:FID})
+    console.log("new updated user is",oldPassword)
+
+    // find length of the publications
+    const bookLen=await book.find({FID:oldPassword._id});
+    const chapterLen=await chapter.find({FID:oldPassword._id})
+    const conferenceLen=await conference.find({FID:oldPassword._id})
+    const journalLen=await journal.find({FID:oldPassword._id})
+
+    const userData={
+        name:oldPassword.Name,
+        email:oldPassword.Email,
+        phone:oldPassword.Phone,
+        department:oldPassword.Department,
+        designation:oldPassword.Designation,
+        bookLen:bookLen.length,
+        chapterLen:chapterLen.length,
+        conferenceLen:conferenceLen.length,
+        journalLen:journalLen.length
+    }
+    return res.status(202).json({Message:"Profile updated successfully.",status:202,data:userData})
+    }catch(err){
+        return res.status(500).json({Message:"Internal server error."})
     }
 })
 module.exports = router;
