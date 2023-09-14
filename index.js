@@ -21,7 +21,7 @@ app.use('/home/faculty/journal', require('./Components/Routes/Journal'));
 app.use('/home/faculty/conference', require('./Components/Routes/Conference'));
 
 
-app.get('/', (req, res) => {
+app.get('/home', (req, res) => {
     try{
     return res.status(200).json({"Message":"Please route to correct page.Have a Good Day"})
     }
