@@ -40,7 +40,7 @@ app.use('/home/faculty/conference', require('./Components/Routes/Conference'));
 app.listen(3001, () => {
     console.log('Listening at Localhost:3001')
 })
-
+module.exports=app;
 // const app = require('express')();
 // const { v4 } = require('uuid');
 
