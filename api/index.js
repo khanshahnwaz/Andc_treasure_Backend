@@ -1,5 +1,5 @@
 // Database connection url 
-const connection = require('./Components/Connection/DB_Connections');
+const connection = require('../Components/Connection/DB_Connections');
 
 // Database connection function 
 connection();
@@ -13,12 +13,12 @@ app.use(express.json())
 app.use(cors())
 
 // Available routes 
-app.use('/home/faculty', require('./Components/Routes/User'));
-app.use('/home/faculty/book', require('./Components/Routes/Book'));
-app.use('/home/faculty/bookChapter', require('./Components/Routes/BookChapter'));
+app.use('/home/faculty', require('../Components/Routes/User'));
+app.use('/home/faculty/book', require('../Components/Routes/Book'));
+app.use('/home/faculty/bookChapter', require('../Components/Routes/BookChapter'));
 
-app.use('/home/faculty/journal', require('./Components/Routes/Journal'));
-app.use('/home/faculty/conference', require('./Components/Routes/Conference'));
+app.use('/home/faculty/journal', require('../Components/Routes/Journal'));
+app.use('/home/faculty/conference', require('../Components/Routes/Conference'));
 
 
 app.get('/home', (req, res) => {
